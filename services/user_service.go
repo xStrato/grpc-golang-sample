@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"log"
 	"time"
 
 	"github.com/xStrato/grpc-golang-sample/pb"
@@ -54,4 +57,25 @@ func (*userService) AddVerbose(req *pb.User, stream pb.UserService_AddVerboseSer
 		User:   user,
 	})
 	return nil
+}
+
+func (*userService) AddStream(stream pb.UserService_AddStreamServer) error {
+	users := []*pb.User{}
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&pb.Users{User: users})
+		}
+		if err != nil {
+			log.Fatalf("Error receiving stream: %v", err)
+		}
+
+		users = append(users, &pb.User{
+			Id:    req.GetId(),
+			Name:  req.GetName(),
+			Email: req.GetEmail(),
+		})
+		fmt.Println("Adding user: ", req.GetName())
+	}
 }

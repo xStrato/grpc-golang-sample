@@ -8,6 +8,10 @@ message User {
     string email=3;
 }
 
+message Users {
+    repeated User user=1;
+}
+
 message UserResultStream {
     string status=1;
     User user=2;
@@ -15,5 +19,6 @@ message UserResultStream {
 
 service UserService {
     rpc Add (User) returns (User);
+    rpc AddStream (stream User) returns (Users);
     rpc AddVerbose (User) returns (stream UserResultStream);
 }
