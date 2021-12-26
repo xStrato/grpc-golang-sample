@@ -22,6 +22,7 @@ func main() {
 	addUser(client)
 	addUserVerbose(client)
 	addUsers(client)
+	addUsersBidi(client)
 }
 
 func addUser(client pb.UserServiceClient) {
