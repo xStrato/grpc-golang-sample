@@ -53,7 +53,5 @@ func (*userService) AddVerbose(req *pb.User, stream pb.UserService_AddVerboseSer
 		Status: "Completed",
 		User:   user,
 	})
-	time.Sleep(time.Second * 3)
-
 	return nil
 }
