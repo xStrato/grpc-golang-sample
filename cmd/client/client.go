@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/xStrato/grpc-golang-sample/pb"
 	"google.golang.org/grpc"
@@ -20,6 +21,7 @@ func main() {
 	client := pb.NewUserServiceClient(conn)
 	addUser(client)
 	addUserVerbose(client)
+	addUsers(client)
 }
 
 func addUser(client pb.UserServiceClient) {
@@ -58,4 +60,27 @@ func addUserVerbose(client pb.UserServiceClient) {
 		}
 		fmt.Println("Status: ", stream.GetStatus(), " - ", stream.GetUser())
 	}
+}
+func addUsers(client pb.UserServiceClient) {
+	reqs := []*pb.User{
+		{Id: "1", Name: "Gilvan1", Email: "gilvan1@email.com"},
+		{Id: "2", Name: "Gilvan2", Email: "gilvan2@email.com"},
+		{Id: "3", Name: "Gilvan3", Email: "gilvan3@email.com"},
+	}
+
+	stream, err := client.AddStream(context.Background())
+	if err != nil {
+		log.Fatalf("Could not make gRPC request: %v", err)
+	}
+
+	for _, req := range reqs {
+		stream.Send(req)
+		time.Sleep(time.Second * 3)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error receiving response: %v", err)
+	}
+	fmt.Println(res)
 }
