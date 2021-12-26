@@ -25,6 +25,7 @@ type UserServiceClient interface {
 	Add(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
 	AddStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddStreamClient, error)
 	AddVerbose(ctx context.Context, in *User, opts ...grpc.CallOption) (UserService_AddVerboseClient, error)
+	AddBidiStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddBidiStreamClient, error)
 }
 
 type userServiceClient struct {
@@ -110,6 +111,37 @@ func (x *userServiceAddVerboseClient) Recv() (*UserResultStream, error) {
 	return m, nil
 }
 
+func (c *userServiceClient) AddBidiStream(ctx context.Context, opts ...grpc.CallOption) (UserService_AddBidiStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[2], "/pb.UserService/AddBidiStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &userServiceAddBidiStreamClient{stream}
+	return x, nil
+}
+
+type UserService_AddBidiStreamClient interface {
+	Send(*User) error
+	Recv() (*UserResultStream, error)
+	grpc.ClientStream
+}
+
+type userServiceAddBidiStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *userServiceAddBidiStreamClient) Send(m *User) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *userServiceAddBidiStreamClient) Recv() (*UserResultStream, error) {
+	m := new(UserResultStream)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type UserServiceServer interface {
 	Add(context.Context, *User) (*User, error)
 	AddStream(UserService_AddStreamServer) error
 	AddVerbose(*User, UserService_AddVerboseServer) error
+	AddBidiStream(UserService_AddBidiStreamServer) error
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedUserServiceServer) AddStream(UserService_AddStreamServer) err
 }
 func (UnimplementedUserServiceServer) AddVerbose(*User, UserService_AddVerboseServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddVerbose not implemented")
+}
+func (UnimplementedUserServiceServer) AddBidiStream(UserService_AddBidiStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddBidiStream not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -211,6 +247,32 @@ func (x *userServiceAddVerboseServer) Send(m *UserResultStream) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _UserService_AddBidiStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(UserServiceServer).AddBidiStream(&userServiceAddBidiStreamServer{stream})
+}
+
+type UserService_AddBidiStreamServer interface {
+	Send(*UserResultStream) error
+	Recv() (*User, error)
+	grpc.ServerStream
+}
+
+type userServiceAddBidiStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *userServiceAddBidiStreamServer) Send(m *UserResultStream) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *userServiceAddBidiStreamServer) Recv() (*User, error) {
+	m := new(User)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -233,6 +295,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "AddVerbose",
 			Handler:       _UserService_AddVerbose_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "AddBidiStream",
+			Handler:       _UserService_AddBidiStream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "user.proto",

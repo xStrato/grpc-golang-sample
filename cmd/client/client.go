@@ -84,3 +84,44 @@ func addUsers(client pb.UserServiceClient) {
 	}
 	fmt.Println(res)
 }
+
+func addUsersBidi(client pb.UserServiceClient) {
+	stream, err := client.AddBidiStream(context.Background())
+	if err != nil {
+		log.Fatalf("Error creating request: %v", err)
+	}
+
+	reqs := []*pb.User{
+		{Id: "1", Name: "Gilvan1", Email: "gilvan1@email.com"},
+		{Id: "2", Name: "Gilvan2", Email: "gilvan2@email.com"},
+		{Id: "3", Name: "Gilvan3", Email: "gilvan3@email.com"},
+	}
+
+	wait := make(chan int)
+
+	go func() {
+		for _, req := range reqs {
+			fmt.Println("Sending user: ", req.Name)
+			stream.Send(req)
+			time.Sleep(time.Second * 3)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Could not receive the msg: %v", err)
+				break
+			}
+			fmt.Println("Status: ", res.GetStatus(), " - ", res.GetUser())
+		}
+		close(wait)
+	}()
+
+	<-wait
+}

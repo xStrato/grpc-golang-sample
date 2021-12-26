@@ -79,3 +79,18 @@ func (*userService) AddStream(stream pb.UserService_AddStreamServer) error {
 		fmt.Println("Adding user: ", req.GetName())
 	}
 }
+
+func (*userService) AddBidiStream(stream pb.UserService_AddBidiStreamServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error receiving stream from client: %v", err)
+		}
+		if err := stream.Send(&pb.UserResultStream{Status: "Added", User: req}); err != nil {
+			log.Fatalf("Error sending stream to client: %v", err)
+		}
+	}
+}
