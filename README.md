@@ -14,7 +14,7 @@ go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 protoc --proto_path=proto proto/*.proto --go_out=pb --go-grpc_out=pb
 ```
 
-### Testando os servicos gRPC via CLI
+### Testing gRPC services by CLI
 ```
 brew install evans (https://github.com/ktr0731/evans)
 evans -r repl --host localhost --port 3030
